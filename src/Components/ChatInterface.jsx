@@ -179,7 +179,7 @@ const ChatInterface = () => {
             try {
                 const response = await axios.post(`${config.url_integration}/test/invoke_agent`, {
                     input_text: inputMessage,
-                    session_id: sessionId.current
+                    session_id: String(sessionId.current)
                 });
 
                 console.log("Response from agent:", response);
@@ -187,7 +187,7 @@ const ChatInterface = () => {
                 // Verifica la struttura della risposta
                 const agentMessage = {
                     id: Date.now(),
-                    text: response?.data?.response || "Sorry, I didn't understand that.", 
+                    text: response?.data?.completion || "Sorry, I didn't understand that.", 
                     isUser: false,
                 };
 
