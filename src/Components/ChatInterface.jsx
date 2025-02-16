@@ -2,12 +2,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { border, styled, width } from "@mui/system";
 import { AppBar, Toolbar, Typography, Avatar, TextField, Button, Box, Paper, List, ListItem, ListItemText, Divider, IconButton, Icon } from "@mui/material";
-import { FaPaperPlane, FaEllipsisV, FaBars, FaTimes, FaUnderline } from "react-icons/fa"; 
+import { FaPaperPlane, FaEllipsisV, FaBars, FaTimes, FaUnderline } from "react-icons/fa";
 import ViewSidebarIcon from '@mui/icons-material/ViewSidebar';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import Person2OutlinedIcon from '@mui/icons-material/Person2Outlined';
 import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
 import axios from "axios";
+import ReactMarkdown from 'react-markdown';
+
 import config from '../config'
 
 const ChatContainer = styled(Box)(({ theme }) => ({
@@ -26,6 +28,7 @@ const ChatAreaContainer = styled(Box)(({ theme, isSidebarVisible }) => ({
     height: "100%",
     borderRadius: "4px",
     position: "relative",
+    backgroundColor: "#e2e2e2"
 }));
 
 const SidebarIcons = styled(Box)(({ theme }) => ({
@@ -50,8 +53,9 @@ const ChatMessagesContainer = styled(Box)(({ theme }) => ({
     alignItems: "center",
     height: "100%",
     padding: theme.spacing(2),
-    paddingTop: theme.spacing(10),
+    paddingTop: theme.spacing(5),
     overflow: "hidden"
+
 }));
 
 //Paper
@@ -61,7 +65,6 @@ const ChatArea = styled(Box)(({ theme }) => ({
     padding: theme.spacing(2),
     display: "flex",
     flexDirection: "column",
-    // backgroundColor: "black",
     width: '70%',
     maxHeight: '100%',
 }));
@@ -77,18 +80,19 @@ const ChatArea = styled(Box)(({ theme }) => ({
 const MessageItem = styled(ListItem)(({ theme, isUser }) => ({
     justifyContent: "flex-start",
     alignItems: "flex-start",
-    padding: theme.spacing(1, 2),
+
     wordWrap: "break-word",
     wordBreak: "break-word",
     flexDirection: isUser ? 'row-reverse' : 'row',
 }));
 
 const MessageBubble = styled(Paper)(({ theme, isUser }) => ({
-    padding: theme.spacing(1, 2),
-    backgroundColor: isUser ? "transparent" : "transparent",
+    padding: theme.spacing(0, 1),
+    //backgroundColor: isUser ? "transparent" : "transparent",
     borderRadius: 8,
     maxWidth: isUser ? "50%" : "80%",
-    color: "black"
+    color: "black",
+    backgroundColor: "white"
 }));
 
 // const MessageBubble = styled(Box)(({ theme, isUser }) => ({
@@ -118,7 +122,14 @@ const StyledTextField = styled(TextField)(({ theme }) => ({
     marginRight: theme.spacing(2),
     wordWrap: "break-word",
     wordBreak: "break-word",
-    // padding: "1px"
+   "& .MuiOutlinedInput-root": {
+        "&:hover fieldset": {
+            borderColor: "#3b8983", 
+        },
+        "&.Mui-focused fieldset": {
+            borderColor: "#3b8983", 
+        },
+    },
 
 }));
 
@@ -127,11 +138,11 @@ const SendButton = styled(Button)(({ theme }) => ({
     width: "48px",
     height: "48px",
     borderRadius: "50%",
-    backgroundColor: "#007bff",
+    backgroundColor: "#3b8983",
     color: "white",
     boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
     "&:hover": {
-        backgroundColor: "#0056b3"
+        backgroundColor: "#3b8983"
     },
     ".MuiButton-endIcon": {
         margin: 0
@@ -139,7 +150,6 @@ const SendButton = styled(Button)(({ theme }) => ({
 }));
 
 const ChatInterface = () => {
-    console.log("SO")
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState("");
     const [chatHistory, setChatHistory] = useState([
@@ -150,10 +160,11 @@ const ChatInterface = () => {
     const [isSidebarVisible, setIsSidebarVisible] = useState(true);
     const chatAreaRef = useRef(null);
     const sessionId = useRef(null);
+    const [isLoading, setIsLoading] = useState(false); // Stato per il caricamento
 
     useEffect(() => {
         if (!sessionId.current) {
-            sessionId.current = Math.floor(100000 + Math.random() * 900000);  
+            sessionId.current = Math.floor(100000 + Math.random() * 900000);
             const newMessage = {
                 id: Date.now(),
                 text: "Hello, I'm Fixy, your IT virtual assistant. Let's discuss your issue.",
@@ -164,7 +175,6 @@ const ChatInterface = () => {
     }, []);
 
     const handleSendMessage = async () => {
-        console.log("DIO CANE")
         if (inputMessage.trim()) {
             const newMessage = {
                 id: Date.now(),
@@ -175,6 +185,16 @@ const ChatInterface = () => {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
             setInputMessage("");
             scrollToBottom();
+
+            const loadingMessage = {
+                id: Date.now() + 1,
+                text: "...",
+                isUser: false,
+                isLoading: true
+            };
+            setMessages((prevMessages) => [...prevMessages, loadingMessage]);
+
+            setIsLoading(true); 
 
             try {
                 const response = await axios.post(`${config.url_integration}/test/invoke_agent`, {
@@ -187,11 +207,19 @@ const ChatInterface = () => {
                 // Verifica la struttura della risposta
                 const agentMessage = {
                     id: Date.now(),
-                    text: response?.data?.completion || "Sorry, I didn't understand that.", 
+                    text: response?.data?.completion || "Sorry, I didn't understand that.",
                     isUser: false,
+                    isLoading: false 
                 };
 
-                setMessages((prevMessages) => [...prevMessages, agentMessage]);
+                setMessages((prevMessages) => {
+                    const messagesWithoutLoading = prevMessages.filter(
+                        (message) => !message.isLoading
+                    );
+                    return [...messagesWithoutLoading, agentMessage];
+                });
+
+                setIsLoading(false); 
                 scrollToBottom();
             } catch (error) {
                 console.error("Error sending message:", error);
@@ -205,7 +233,7 @@ const ChatInterface = () => {
             }
         }
     };
-    
+
     const handleInputChange = (e) => {
         setInputMessage(e.target.value);
     };
@@ -226,7 +254,7 @@ const ChatInterface = () => {
 
     const handleToggleSidebar = () => {
         isSidebarVisible ? setIsSidebarVisible(false) : setIsSidebarVisible(true)
-    }
+    };
 
     useEffect(() => {
         scrollToBottom();
@@ -299,11 +327,11 @@ const ChatInterface = () => {
                             <List>
                                 {messages.map((message) => (
                                     <MessageItem key={message.id} isUser={message.isUser}>
-                                        <Box sx={[ message.isUser ? { ml: 1 } : {mr: 1}]}>
-                                            {!message.isUser ? <SmartToyOutlinedIcon/> : <Person2OutlinedIcon/>}
+                                        <Box sx={[message.isUser ? { ml: 1 } : { mr: 1 }]}>
+                                            {!message.isUser ? <SmartToyOutlinedIcon /> : <Person2OutlinedIcon />}
                                         </Box>
                                         <MessageBubble isUser={message.isUser}>
-                                            <ListItemText primary={message.text} />
+                                            <ReactMarkdown>{message.text}</ReactMarkdown>
                                         </MessageBubble>
                                     </MessageItem>
                                 ))}

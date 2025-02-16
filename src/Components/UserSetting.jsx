@@ -21,10 +21,22 @@ function UserSetting() {
   };
 
   return (
-    <Box sx={{ flexGrow: 0 }}>
+    <Box sx={{ flexGrow: 0}}>
       <Tooltip title="Open settings">
         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-          <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+          <Avatar alt="Remy Sharp" src="omino.png" sx={{
+    width: 60,  // Dimensione del wrapper
+    height: 60, // Dimensione del wrapper
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 0, // Elimina eventuali spazi extra
+    '& img': {
+      objectFit: 'contain',  // Assicura che l'immagine non si distorca
+      width: '80%',          // Riduci l'immagine all'interno del wrapper
+      height: '80%'          // Riduci l'immagine all'interno del wrapper
+    }
+  }} />
         </IconButton>
       </Tooltip>
       <Menu
