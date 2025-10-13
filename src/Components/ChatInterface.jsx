@@ -1,365 +1,424 @@
-// import { axios } from 'axios';
 import React, { useState, useEffect, useRef } from "react";
-import { border, styled, width } from "@mui/system";
-import { AppBar, Toolbar, Typography, Avatar, TextField, Button, Box, Paper, List, ListItem, ListItemText, Divider, IconButton, Icon } from "@mui/material";
-import { FaPaperPlane, FaEllipsisV, FaBars, FaTimes, FaUnderline } from "react-icons/fa";
-import ViewSidebarIcon from '@mui/icons-material/ViewSidebar';
-import EditNoteIcon from '@mui/icons-material/EditNote';
-import Person2OutlinedIcon from '@mui/icons-material/Person2Outlined';
-import SmartToyOutlinedIcon from '@mui/icons-material/SmartToyOutlined';
+import { styled } from "@mui/system";
+import { Typography, TextField, Button, Box, Paper, List, ListItem, ListItemText, Divider, IconButton, Collapse, Chip } from "@mui/material";
+import { FaPaperPlane } from "react-icons/fa";
+import MenuIcon from '@mui/icons-material/Menu';
+import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import SearchIcon from '@mui/icons-material/Search';
+import PersonIcon from '@mui/icons-material/Person';
+import SmartToyIcon from '@mui/icons-material/SmartToy';
 import axios from "axios";
 import ReactMarkdown from 'react-markdown';
+import config from '../config';
 
-import config from '../config'
+// ServiceNow Color Palette
+const colors = {
+    primary: '#81b5a1',
+    secondary: '#2c3e50',
+    background: '#f7f9fa',
+    sidebarBg: '#1f2937',
+    sidebarHover: '#374151',
+    textPrimary: '#1f2937',
+    textSecondary: '#6b7280',
+    border: '#e5e7eb',
+    userMessage: '#81b5a1',
+    botMessage: '#ffffff'
+};
 
-const ChatContainer = styled(Box)(({ theme }) => ({
-    display: "flex",
-    flexDirection: "row",
-    width: "100%",
-    height: "90%",
-    border: "1px solid #ccc",
-    borderRadius: "4px"
+const Container = styled(Box)({
+    display: 'flex',
+    height: '90vh',
+    backgroundColor: colors.background,
+    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
+});
+
+const Sidebar = styled(Box)(({ visible }) => ({
+    width: visible ? '280px' : '0',
+    backgroundColor: colors.sidebarBg,
+    transition: 'width 0.3s ease',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    borderRight: `1px solid ${colors.border}`
 }));
 
-const ChatAreaContainer = styled(Box)(({ theme, isSidebarVisible }) => ({
-    display: "flex",
-    flexDirection: "column",
-    width: "100%",
-    height: "100%",
-    borderRadius: "4px",
-    position: "relative",
-    backgroundColor: "#e2e2e2"
-}));
+const SidebarHeader = styled(Box)({
+    padding: '16px',
+    borderBottom: `1px solid ${colors.sidebarHover}`,
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+});
 
-const SidebarIcons = styled(Box)(({ theme }) => ({
-    position: "absolute",
-    top: theme.spacing(2),
-    left: theme.spacing(2),
-    display: "flex",
-    flexDirection: "row",
-    gap: theme.spacing(1),
-}));
-
-const Sidebar = styled(Paper)(({ theme, visible }) => ({
-    width: visible ? "15%" : "0",
-    transition: "width 0.3s ease",
-    padding: visible ? theme.spacing(2) : "0",
-    backgroundColor: "#f0f0f0"
-}));
-
-const ChatMessagesContainer = styled(Box)(({ theme }) => ({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    height: "100%",
-    padding: theme.spacing(2),
-    paddingTop: theme.spacing(5),
-    overflow: "hidden"
-
-}));
-
-//Paper
-const ChatArea = styled(Box)(({ theme }) => ({
+const SidebarContent = styled(Box)({
     flex: 1,
-    overflowY: "auto",
-    padding: theme.spacing(2),
-    display: "flex",
-    flexDirection: "column",
-    width: '70%',
-    maxHeight: '100%',
-}));
-
-// const MessageItem = styled(ListItem)(({ theme, isUser }) => ({
-//     justifyContent: isUser ? "flex-end" : "flex-start",
-//     alignItems: "flex-start",
-//     padding: theme.spacing(1, 2),
-//     wordWrap: "break-word",
-//     wordBreak: "break-word",
-// }));
-
-const MessageItem = styled(ListItem)(({ theme, isUser }) => ({
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-
-    wordWrap: "break-word",
-    wordBreak: "break-word",
-    flexDirection: isUser ? 'row-reverse' : 'row',
-}));
-
-const MessageBubble = styled(Paper)(({ theme, isUser }) => ({
-    padding: theme.spacing(0, 1),
-    //backgroundColor: isUser ? "transparent" : "transparent",
-    borderRadius: 8,
-    maxWidth: isUser ? "50%" : "80%",
-    color: "black",
-    backgroundColor: "white"
-}));
-
-// const MessageBubble = styled(Box)(({ theme, isUser }) => ({
-//     padding: theme.spacing(1, 2),
-//     backgroundColor: isUser ? "#FFFFFF" : "transparent",
-//     borderRadius: 8,
-//     maxWidth: isUser ? "50%" : "80%",
-//     color: isUser? "black" : "black",
-//     border: isUser ? "none" : "none",
-// }));
-
-const ChatInputAreaContainer = styled(Box)(({ theme }) => ({
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-}))
-
-const InputArea = styled(Box)(({ theme }) => ({
-    display: "flex",
-    padding: theme.spacing(2),
-    width: '70%',
-    alignItems: 'center' //flex-end' 
-}));
-
-const StyledTextField = styled(TextField)(({ theme }) => ({
-    flex: 1,
-    marginRight: theme.spacing(2),
-    wordWrap: "break-word",
-    wordBreak: "break-word",
-   "& .MuiOutlinedInput-root": {
-        "&:hover fieldset": {
-            borderColor: "#3b8983", 
-        },
-        "&.Mui-focused fieldset": {
-            borderColor: "#3b8983", 
-        },
+    overflowY: 'auto',
+    padding: '16px',
+    '&::-webkit-scrollbar': {
+        width: '6px'
     },
-
-}));
-
-const SendButton = styled(Button)(({ theme }) => ({
-    minWidth: "48px",
-    width: "48px",
-    height: "48px",
-    borderRadius: "50%",
-    backgroundColor: "#3b8983",
-    color: "white",
-    boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-    "&:hover": {
-        backgroundColor: "#3b8983"
-    },
-    ".MuiButton-endIcon": {
-        margin: 0
+    '&::-webkit-scrollbar-thumb': {
+        backgroundColor: colors.sidebarHover,
+        borderRadius: '3px'
     }
+});
+
+const CategoryItem = styled(Box)({
+    marginBottom: '8px'
+});
+
+const CategoryHeader = styled(Box)({
+    padding: '12px 16px',
+    backgroundColor: colors.sidebarHover,
+    borderRadius: '6px',
+    cursor: 'pointer',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    color: '#f3f4f6',
+    fontWeight: 600,
+    fontSize: '14px',
+    transition: 'background-color 0.2s',
+    '&:hover': {
+        backgroundColor: '#4b5563'
+    }
+});
+
+const SubItem = styled(Box)({
+    padding: '10px 16px 10px 32px',
+    color: '#d1d5db',
+    fontSize: '13px',
+    cursor: 'pointer',
+    borderRadius: '4px',
+    transition: 'all 0.2s',
+    '&:hover': {
+        backgroundColor: colors.sidebarHover,
+        color: '#f3f4f6',
+        paddingLeft: '36px'
+    }
+});
+
+const MainContent = styled(Box)({
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: colors.background
+});
+
+const Header = styled(Box)({
+    padding: '16px 24px',
+    backgroundColor: 'white',
+    borderBottom: `1px solid ${colors.border}`,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+});
+
+const ChatArea = styled(Box)({
+    flex: 1,
+    overflowY: 'auto',
+    padding: '24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    '&::-webkit-scrollbar': {
+        width: '8px'
+    },
+    '&::-webkit-scrollbar-thumb': {
+        backgroundColor: '#d1d5db',
+        borderRadius: '4px'
+    }
+});
+
+const MessageRow = styled(Box)(({ isUser }) => ({
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'flex-start',
+    flexDirection: isUser ? 'row-reverse' : 'row'
 }));
+
+const Avatar = styled(Box)(({ isUser }) => ({
+    width: '36px',
+    height: '36px',
+    borderRadius: '50%',
+    backgroundColor: isUser ? colors.primary : colors.secondary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: 'white',
+    flexShrink: 0
+}));
+
+const MessageBubble = styled(Paper)(({ isUser }) => ({
+    padding: '12px 16px',
+    maxWidth: '70%',
+    backgroundColor: isUser ? colors.userMessage : colors.botMessage,
+    color: isUser ? 'white' : colors.textPrimary,
+    borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+    wordWrap: 'break-word'
+}));
+
+const InputContainer = styled(Box)({
+    padding: '16px 24px',
+    backgroundColor: 'white',
+    borderTop: `1px solid ${colors.border}`,
+    display: 'flex',
+    gap: '12px',
+    alignItems: 'center'
+});
+
+const StyledInput = styled(TextField)({
+    flex: 1,
+    '& .MuiOutlinedInput-root': {
+        borderRadius: '24px',
+        backgroundColor: colors.background,
+        '& fieldset': {
+            borderColor: colors.border
+        },
+        '&:hover fieldset': {
+            borderColor: colors.primary
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: colors.primary
+        }
+    }
+});
+
+const SendBtn = styled(Button)({
+    minWidth: '48px',
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    backgroundColor: colors.primary,
+    color: 'white',
+    '&:hover': {
+        backgroundColor: '#6a9d87'
+    }
+});
+
+const SearchInput = styled(TextField)({
+    marginBottom: '16px',
+    '& .MuiOutlinedInput-root': {
+        borderRadius: '8px',
+        backgroundColor: colors.sidebarHover,
+        color: '#f3f4f6',
+        '& fieldset': {
+            borderColor: 'transparent'
+        },
+        '&:hover fieldset': {
+            borderColor: colors.primary
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: colors.primary
+        }
+    },
+    '& .MuiInputBase-input': {
+        color: '#f3f4f6',
+        '&::placeholder': {
+            color: '#9ca3af',
+            opacity: 1
+        }
+    }
+});
 
 const ChatInterface = () => {
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState("");
-    const [chatHistory, setChatHistory] = useState([
-        { id: 1, title: "VPN resolution problem" },
-        { id: 2, title: "Opening ticket" },
-        { id: 3, title: "Reporting an issue" }
-    ]);
     const [isSidebarVisible, setIsSidebarVisible] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
     const chatAreaRef = useRef(null);
     const sessionId = useRef(null);
-    const [isLoading, setIsLoading] = useState(false); // Stato per il caricamento
+
+    const [categories, setCategories] = useState([
+        {
+            id: 1,
+            title: "Agent RAG",
+            expanded: true,
+            items: [
+                { id: 1, title: "Foundations" },
+                { id: 2, title: "DevOps Practice" },
+                { id: 3, title: "Application Guidelines" },
+            ]
+        },
+        {
+            id: 2,
+            title: "Agent Execute",
+            expanded: false,
+            items: [
+                { id: 4, title: "Compute" },
+                { id: 5, title: "SMTP" },
+                { id: 6, title: "Event Notification" },
+                { id: 7, title: "Connectivity" },
+                { id: 8, title: "IAM" },
+                { id: 9, title: "Instance Scheduler" },
+                { id: 10, title: "Cost Optimization" },
+                { id: 11, title: "Config Remediation" },
+                { id: 12, title: "Account Creation" }
+            ]
+        },
+        {
+            id: 3,
+            title: "Agent Advisory",
+            expanded: false,
+            items: [
+                { id: 13, title: "Advisory FinOps" },
+                { id: 14, title: "Event History" }
+            ]
+        }
+    ]);
 
     useEffect(() => {
         if (!sessionId.current) {
             sessionId.current = Math.floor(100000 + Math.random() * 900000);
-            const newMessage = {
+            setMessages([{
                 id: Date.now(),
-                text: "Hello, I'm Fixy, your IT virtual assistant. Let's discuss your issue.",
-                isUser: false,
-            };
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
+                text: "Hello! I'm Fixy, your IT virtual assistant. How can I help you today?",
+                isUser: false
+            }]);
         }
     }, []);
 
-    const handleSendMessage = async () => {
-        if (inputMessage.trim()) {
-            const newMessage = {
-                id: Date.now(),
-                text: inputMessage,
-                isUser: true,
-            };
-
-            setMessages((prevMessages) => [...prevMessages, newMessage]);
-            setInputMessage("");
-            scrollToBottom();
-
-            const loadingMessage = {
-                id: Date.now() + 1,
-                text: "...",
-                isUser: false,
-                isLoading: true
-            };
-            setMessages((prevMessages) => [...prevMessages, loadingMessage]);
-
-            setIsLoading(true); 
-
-            try {
-                const response = await axios.post(`${config.url_integration}/test/invoke_agent`, {
-                    input_text: inputMessage,
-                    session_id: String(sessionId.current)
-                });
-
-                console.log("Response from agent:", response);
-
-                // Verifica la struttura della risposta
-                const agentMessage = {
-                    id: Date.now(),
-                    text: response?.data?.completion || "Sorry, I didn't understand that.",
-                    isUser: false,
-                    isLoading: false 
-                };
-
-                setMessages((prevMessages) => {
-                    const messagesWithoutLoading = prevMessages.filter(
-                        (message) => !message.isLoading
-                    );
-                    return [...messagesWithoutLoading, agentMessage];
-                });
-
-                setIsLoading(false); 
-                scrollToBottom();
-            } catch (error) {
-                console.error("Error sending message:", error);
-                const errorMessage = {
-                    id: Date.now(),
-                    text: "Oops, something went wrong. Please try again later.",
-                    isUser: false,
-                };
-                setMessages((prevMessages) => [...prevMessages, errorMessage]);
-                scrollToBottom();
-            }
-        }
-    };
-
-    const handleInputChange = (e) => {
-        setInputMessage(e.target.value);
-    };
-
-    const scrollToBottom = () => {
+    useEffect(() => {
         if (chatAreaRef.current) {
             chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
         }
-    };
-
-    const loadChatHistory = (chatId) => {
-        setMessages([{ id: Date.now(), text: `Loaded ${chatId}`, isUser: false }]);
-    };
-
-    const toggleSidebar = () => {
-        setIsSidebarVisible(!isSidebarVisible);
-    };
-
-    const handleToggleSidebar = () => {
-        isSidebarVisible ? setIsSidebarVisible(false) : setIsSidebarVisible(true)
-    };
-
-    useEffect(() => {
-        scrollToBottom();
     }, [messages]);
 
+    const handleSendMessage = async () => {
+        if (!inputMessage.trim()) return;
+
+        const newMessage = { id: Date.now(), text: inputMessage, isUser: true };
+        setMessages(prev => [...prev, newMessage]);
+        setInputMessage("");
+
+        const loadingMsg = { id: Date.now() + 1, text: "Typing...", isUser: false, isLoading: true };
+        setMessages(prev => [...prev, loadingMsg]);
+
+        try {
+            const response = await axios.post(`${config.url_integration}/test/invoke_agent`, {
+                input_text: inputMessage,
+                session_id: String(sessionId.current)
+            });
+
+            setMessages(prev => prev.filter(m => !m.isLoading).concat({
+                id: Date.now(),
+                text: response?.data?.completion || "Sorry, I didn't understand that.",
+                isUser: false
+            }));
+        } catch (error) {
+            console.error("Error:", error);
+            setMessages(prev => prev.filter(m => !m.isLoading).concat({
+                id: Date.now(),
+                text: "Oops! Something went wrong. Please try again.",
+                isUser: false
+            }));
+        }
+    };
+
+    const handleCategoryToggle = (categoryId) => {
+        setCategories(categories.map(cat =>
+            cat.id === categoryId ? { ...cat, expanded: !cat.expanded } : cat
+        ));
+    };
+
+    const handleSubItemClick = (item) => {
+        setInputMessage(`Tell me about ${item.title}`);
+    };
+
+    const filteredCategories = categories.map(cat => ({
+        ...cat,
+        items: cat.items.filter(item =>
+            item.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    })).filter(cat => cat.items.length > 0 || searchTerm === "");
+
     return (
-        <>
-            <ChatContainer>
-                <Sidebar visible={isSidebarVisible}>
-                    {isSidebarVisible &&
-                        <div style={{
-                            display: 'flex',
-                            flexDirection: "row",
-                            justifyContent: "space-between"
-                        }}>
-                            <IconButton
-                                color="inherit"
-                                aria-label="toggle drawer"
-                                onClick={handleToggleSidebar}
-                                edge="start"
-                                sx={{ width: 'auto' }}
-                            >
-                                <ViewSidebarIcon />
-                            </IconButton>
-                            <IconButton
-                                color="inherit"
-                                aria-label="edit"
-                                onClick={handleToggleSidebar}
-                                edge="start"
-                                sx={{ width: 'auto' }}
-                            >
-                                <EditNoteIcon />
-                            </IconButton>
-                        </div>}
+        <Container sx={{ marginTop: '40px' }}>
+            <Sidebar visible={isSidebarVisible}>
+                <SidebarHeader >
+                    <Typography variant="h6" sx={{ color: '#f3f4f6', fontWeight: 600, fontSize: '16px' }}>
+                        Service Catalog
+                    </Typography>
+                    <IconButton size="small" onClick={() => setIsSidebarVisible(false)} sx={{ color: '#9ca3af' }}>
+                        <CloseIcon />
+                    </IconButton>
+                </SidebarHeader>
+                <SidebarContent>
+                    <SearchInput
+                        size="small"
+                        
+                        placeholder="Search services..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        InputProps={{
+                            startAdornment: <SearchIcon sx={{ color: '#9ca3af', mr: 1 }} />
+                        }}
+                    />
+                    {filteredCategories.map(category => (
+                        <CategoryItem key={category.id}>
+                            <CategoryHeader onClick={() => handleCategoryToggle(category.id)}>
+                                <span>{category.title}</span>
+                                {category.expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            </CategoryHeader>
+                            <Collapse in={category.expanded}>
+                                <Box sx={{ mt: 1 }}>
+                                    {category.items.map(item => (
+                                        <SubItem key={item.id} onClick={() => handleSubItemClick(item)}>
+                                            {item.title}
+                                        </SubItem>
+                                    ))}
+                                </Box>
+                            </Collapse>
+                        </CategoryItem>
+                    ))}
+                </SidebarContent>
+            </Sidebar>
 
-                    {isSidebarVisible &&
-                        <List>
-                            {chatHistory.map((chat) => (
-                                <ListItem button key={chat.id} onClick={() => loadChatHistory(chat.title)}>
-                                    <ListItemText primary={chat.title} />
-                                </ListItem>
-                            ))}
-                        </List>}
-                </Sidebar>
-
-                {/* Main Chat Area */}
-                <ChatAreaContainer>
+            <MainContent>
+                <Header>
                     {!isSidebarVisible && (
-                        <SidebarIcons>
-                            <IconButton
-                                color="inherit"
-                                aria-label="toggle drawer"
-                                onClick={handleToggleSidebar}
-                                edge="start"
-                            >
-                                <ViewSidebarIcon />
-                            </IconButton>
-                            <IconButton
-                                color="inherit"
-                                aria-label="edit"
-                                onClick={handleToggleSidebar}
-                                edge="start"
-                            >
-                                <EditNoteIcon />
-                            </IconButton>
-                        </SidebarIcons>
+                        <IconButton onClick={() => setIsSidebarVisible(true)} sx={{ color: colors.textSecondary }}>
+                            <MenuIcon />
+                        </IconButton>
                     )}
-                    <ChatMessagesContainer>
-                        <ChatArea ref={chatAreaRef}>
-                            <List>
-                                {messages.map((message) => (
-                                    <MessageItem key={message.id} isUser={message.isUser}>
-                                        <Box sx={[message.isUser ? { ml: 1 } : { mr: 1 }]}>
-                                            {!message.isUser ? <SmartToyOutlinedIcon /> : <Person2OutlinedIcon />}
-                                        </Box>
-                                        <MessageBubble isUser={message.isUser}>
-                                            <ReactMarkdown>{message.text}</ReactMarkdown>
-                                        </MessageBubble>
-                                    </MessageItem>
-                                ))}
-                            </List>
-                        </ChatArea>
-                    </ChatMessagesContainer>
-                    <ChatInputAreaContainer>
-                        <InputArea>
-                            <StyledTextField
-                                variant="outlined"
-                                placeholder="Type a message..."
-                                value={inputMessage}
-                                onChange={handleInputChange}
-                                onKeyUp={(e) => e.key === "Enter" && handleSendMessage()}
-                                multiline
-                                minRows={1}
-                                maxRows={5}
-                            />
-                            <SendButton
-                                variant="contained"
-                                endIcon={<FaPaperPlane />}
-                                onClick={handleSendMessage}
-                            />
-                        </InputArea>
-                    </ChatInputAreaContainer>
-                </ChatAreaContainer>
-            </ChatContainer>
-        </>
+                    <Typography variant="h6" sx={{ color: colors.textPrimary, fontWeight: 600 }}>
+                        IT Virtual Assistant
+                    </Typography>
+                    <Chip label="Online" size="small" sx={{ backgroundColor: '#10b981', color: 'white' }} />
+                </Header>
+
+                <ChatArea ref={chatAreaRef}>
+                    {messages.map(message => (
+                        <MessageRow key={message.id} isUser={message.isUser}>
+                            <Avatar isUser={message.isUser}>
+                                {message.isUser ? <PersonIcon fontSize="small" /> : <SmartToyIcon fontSize="small" />}
+                            </Avatar>
+                            <MessageBubble isUser={message.isUser}>
+                                <ReactMarkdown>{message.text}</ReactMarkdown>
+                            </MessageBubble>
+                        </MessageRow>
+                    ))}
+                </ChatArea>
+
+                <InputContainer>
+                    <StyledInput
+                        placeholder="Type your message..."
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                        multiline
+                        maxRows={4}
+                    />
+                    <SendBtn onClick={handleSendMessage}>
+                        <FaPaperPlane />
+                    </SendBtn>
+                </InputContainer>
+            </MainContent>
+        </Container>
     );
 };
 
