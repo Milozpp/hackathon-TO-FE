@@ -1,190 +1,99 @@
 import * as React from 'react';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
-import MuiDrawer from '@mui/material/Drawer';
-import MuiAppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import List from '@mui/material/List';
 import CssBaseline from '@mui/material/CssBaseline';
-import Typography from '@mui/material/Typography';
-import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
-import UserSetting from './UserSetting';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import LogoutIcon from '@mui/icons-material/Logout';
 import ChatInterface from './ChatInterface';
+import ServiceCatalog from './ServiceCatalog';
+import { useAuth } from '../contexts/AuthContext';
 
-const drawerWidth = 240;
 
-const openedMixin = (theme) => ({
-  width: drawerWidth,
-  transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.durationenteringScreen,
-  }),
-  overflowX: 'hidden',
+
+const AppContainer = styled(Box)({
+  minHeight: '100vh',
+  backgroundColor: '#ffffff',
+  padding: '20px',
+  borderRadius: '24px',
+  boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)',
+  overflow: 'hidden'
 });
 
-const closedMixin = (theme) => ({
-  transition: theme.transitions.create('width', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: 'hidden',
-  width: `calc(${theme.spacing(7)} + 1px)`,
-  [theme.breakpoints.up('sm')]: {
-    width: `calc(${theme.spacing(8)} + 1px)`,
-  },
-});
-
-const DrawerHeader = styled('div')(({ theme }) => ({
+const Header = styled(Box)({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'flex-end',
-  padding: theme.spacing(0, 1),
-  // necessary for content to be below app bar
-  ...theme.mixins.toolbar,
-}));
+  justifyContent: 'center',
+  position: 'relative',
+  marginBottom: '20px',
+  padding: '16px 0'
+});
 
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  backgroundColor: '#3b8983',
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  transition: theme.transitions.create(['width', 'margin'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  variants: [
-    {
-      props: ({ open }) => open,
-      style: {
-        marginLeft: drawerWidth,
-        width: `calc(100% - ${drawerWidth}px)`,
-        transition: theme.transitions.create(['width', 'margin'], {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
-      },
-    },
-  ],
-}));
+const Logo = styled('img')({
+  height: '60px',
+  width: 'auto'
+});
 
-const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme }) => ({
-    width: drawerWidth,
-    flexShrink: 0,
-    whiteSpace: 'nowrap',
-    boxSizing: 'border-box',
-    variants: [
-      {
-        props: ({ open }) => open,
-        style: {
-          ...openedMixin(theme),
-          '& .MuiDrawer-paper': openedMixin(theme),
-        },
-      },
-      {
-        props: ({ open }) => !open,
-        style: {
-          ...closedMixin(theme),
-          '& .MuiDrawer-paper': closedMixin(theme),
-        },
-      },
-    ],
-  }),
-);
-const CustomDrawer = () => {
-  const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
+const BackButton = styled(IconButton)({
+  position: 'absolute',
+  left: 0,
+  backgroundColor: '#e9ecef',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+  '&:hover': {
+    backgroundColor: '#dee2e6'
+  }
+});
+const HomePage = () => {
+  const auth = useAuth();
+  const [selectedCategory, setSelectedCategory] = React.useState(null);
 
-  const [subView, setSubView] = React.useState(null);
-
-  const handleViewSet = (view) => {
-    setSubView(view)
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
   };
 
-  const handleDrawerOpen = () => {
-    setOpen(true);
+  const handleBackToCatalog = () => {
+    setSelectedCategory(null);
   };
 
-  const handleDrawerClose = () => {
-    setOpen(false);
+  const handleLogout = () => {
+    auth.logout();
   };
 
-  function HomeComponent() {
-    return (
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <DrawerHeader />
-        <Typography sx={{ marginBottom: 2 }}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-          incididunt ut labore et dolore magna aliqua. Rhoncus dolor purus non enim
-          praesent elementum facilisis leo vel. Risus at ultrices mi tempus imperdiet.
-        </Typography>
-      </Box>
-    );
-  }
 
-  function DashboardComponent() {
-    return (
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <DrawerHeader />
-        <Typography sx={{ marginBottom: 2 }}>
-          Dashboard component
-        </Typography>
-      </Box>
-    );
-  }
-
-  function SettingsComponent() {
-    return (
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <DrawerHeader />
-        <Typography sx={{ marginBottom: 2 }}>
-          Settings component
-        </Typography>
-      </Box>
-    );
-  }
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <AppContainer>
       <CssBaseline />
-      <AppBar position="fixed">
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="toggle drawer"
-            onClick={open ? handleDrawerClose : handleDrawerOpen}
-            edge="start"
-            sx={{ marginRight: 2 }}
+      <Header>
+        {selectedCategory && (
+          <BackButton
+            aria-label="back to catalog"
+            onClick={handleBackToCatalog}
           >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 600 }}>
-            REPLY SERVICE NOW
-          </Typography>
-          <Box sx={{ ml: 'auto' }}>
-            <UserSetting />
-          </Box>
-        </Toolbar>
-      </AppBar>
+            <ArrowBackIcon />
+          </BackButton>
+        )}
+        <Logo src="/logo.jpeg" alt="Logo" />
+        <IconButton
+          onClick={handleLogout}
+          sx={{
+            position: 'absolute',
+            right: 0,
+            backgroundColor: '#e9ecef',
+            '&:hover': { backgroundColor: '#dee2e6' }
+          }}
+        >
+          <LogoutIcon />
+        </IconButton>
+      </Header>
 
-      {/* Sidebar (Drawer) */}
-
-
-      <Box component="main" sx={{ mt: 2, flexGrow: 1, p: 3, justifyContent: "center", display: "flex", alignItems: "center", height: "100vh" }}>
-        <DrawerHeader />
-       <ChatInterface /> 
-      </Box>
-    </Box>
+      {!selectedCategory ? (
+        <ServiceCatalog onCategorySelect={handleCategorySelect} />
+      ) : (
+        <ChatInterface selectedCategory={selectedCategory} />
+      )}
+    </AppContainer>
   );
 }
 
-export default CustomDrawer;
+export default HomePage;

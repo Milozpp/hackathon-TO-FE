@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { styled } from "@mui/system";
-import { Typography, TextField, Button, Box, Paper, List, ListItem, ListItemText, Divider, IconButton, Collapse, Chip } from "@mui/material";
+import { Typography, TextField, Button, Box, Paper, IconButton, Collapse, Chip } from "@mui/material";
 import { FaPaperPlane } from "react-icons/fa";
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
@@ -12,36 +12,39 @@ import SmartToyIcon from '@mui/icons-material/SmartToy';
 import axios from "axios";
 import ReactMarkdown from 'react-markdown';
 import config from '../config';
+import { useAuth } from '../contexts/AuthContext';
 
 // ServiceNow Color Palette
 const colors = {
-    primary: '#81b5a1',
+    primary: '#2d5a4a',
     secondary: '#2c3e50',
-    background: '#f7f9fa',
+    background: '#f5f5f5',
     sidebarBg: '#1f2937',
     sidebarHover: '#374151',
     textPrimary: '#1f2937',
     textSecondary: '#6b7280',
     border: '#e5e7eb',
-    userMessage: '#81b5a1',
-    botMessage: '#ffffff'
+    userMessage: '#2d5a4a',
+    botMessage: '#f8f9fa'
 };
 
 const Container = styled(Box)({
     display: 'flex',
-    height: '90vh',
-    backgroundColor: colors.background,
-    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif'
+    height: '100%',
+    backgroundColor: '#ffffff',
+    fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
+    borderRadius: '16px',
+    overflow: 'hidden'
 });
 
 const Sidebar = styled(Box)(({ visible }) => ({
     width: visible ? '280px' : '0',
-    backgroundColor: colors.sidebarBg,
+    backgroundColor: '#2d5a4a',
     transition: 'width 0.3s ease',
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    borderRight: `1px solid ${colors.border}`
+    borderLeft: `1px solid ${colors.border}`
 }));
 
 const SidebarHeader = styled(Box)({
@@ -86,17 +89,26 @@ const CategoryHeader = styled(Box)({
     }
 });
 
-const SubItem = styled(Box)({
-    padding: '10px 16px 10px 32px',
+const ServiceButton = styled(Box)({
+    padding: '12px 16px',
+    margin: '4px 8px',
     color: '#d1d5db',
     fontSize: '13px',
     cursor: 'pointer',
-    borderRadius: '4px',
-    transition: 'all 0.2s',
+    borderRadius: '8px',
+    border: '1px solid #ffffff',
+    backgroundColor: 'transparent',
+    transition: 'all 0.3s ease',
+    textAlign: 'center',
     '&:hover': {
-        backgroundColor: colors.sidebarHover,
-        color: '#f3f4f6',
-        paddingLeft: '36px'
+        backgroundColor: '#2d5a4a',
+        color: 'white',
+        transform: 'translateY(-2px)',
+        boxShadow: '0 4px 12px rgba(45, 90, 74, 0.3)'
+    },
+    '&:active': {
+        transform: 'translateY(0px) scale(0.95)',
+        transition: 'all 0.1s ease'
     }
 });
 
@@ -109,7 +121,7 @@ const MainContent = styled(Box)({
 
 const Header = styled(Box)({
     padding: '16px 24px',
-    backgroundColor: 'white',
+    backgroundColor: '#f1f3f4',
     borderBottom: `1px solid ${colors.border}`,
     display: 'flex',
     alignItems: 'center',
@@ -164,7 +176,7 @@ const MessageBubble = styled(Paper)(({ isUser }) => ({
 
 const InputContainer = styled(Box)({
     padding: '16px 24px',
-    backgroundColor: 'white',
+    backgroundColor: '#f1f3f4',
     borderTop: `1px solid ${colors.border}`,
     display: 'flex',
     gap: '12px',
@@ -196,7 +208,7 @@ const SendBtn = styled(Button)({
     backgroundColor: colors.primary,
     color: 'white',
     '&:hover': {
-        backgroundColor: '#6a9d87'
+        backgroundColor: '#1e3d33'
     }
 });
 
@@ -225,7 +237,8 @@ const SearchInput = styled(TextField)({
     }
 });
 
-const ChatInterface = () => {
+const ChatInterface = ({ selectedCategory }) => {
+    const { user } = useAuth();
     const [messages, setMessages] = useState([]);
     const [inputMessage, setInputMessage] = useState("");
     const [isSidebarVisible, setIsSidebarVisible] = useState(true);
@@ -274,13 +287,18 @@ const ChatInterface = () => {
     useEffect(() => {
         if (!sessionId.current) {
             sessionId.current = Math.floor(100000 + Math.random() * 900000);
-            setMessages([{
-                id: Date.now(),
-                text: "Hello! I'm Fixy, your IT virtual assistant. How can I help you today?",
-                isUser: false
-            }]);
         }
-    }, []);
+        
+        const welcomeMessage = selectedCategory 
+            ? `Hello! I'm Fixy, your IT virtual assistant for ${selectedCategory.title}. How can I help you today?`
+            : "Hello! I'm Fixy, your IT virtual assistant. How can I help you today?";
+            
+        setMessages([{
+            id: Date.now(),
+            text: welcomeMessage,
+            isUser: false
+        }]);
+    }, [selectedCategory]);
 
     useEffect(() => {
         if (chatAreaRef.current) {
@@ -299,10 +317,45 @@ const ChatInterface = () => {
         setMessages(prev => [...prev, loadingMsg]);
 
         try {
-            const response = await axios.post(`${config.url_integration}/test/invoke_agent`, {
+            // Get JWT token from current user session
+            const getToken = () => {
+                return new Promise((resolve, reject) => {
+                    if (user) {
+                        user.getSession((err, session) => {
+                            if (err) {
+                                reject(err);
+                                return;
+                            }
+                            const token = session.getIdToken().getJwtToken();
+                            resolve(token);
+                        });
+                    } else {
+                        reject(new Error('No user session'));
+                    }
+                });
+            };
+
+            const token = await getToken();
+            console.log('JWT Token:', token);
+            
+            console.log('Sending API request to:', `${config.url_integration}/test/invoke_agent`);
+            console.log('Request payload:', {
                 input_text: inputMessage,
                 session_id: String(sessionId.current)
             });
+
+            const response = await axios.post(`${config.url_integration}/test/invoke_agent`, {
+                input_text: inputMessage,
+                session_id: String(sessionId.current)
+            }, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('API response:', response);
+            console.log('Response data:', response.data);
 
             setMessages(prev => prev.filter(m => !m.isLoading).concat({
                 id: Date.now(),
@@ -310,10 +363,16 @@ const ChatInterface = () => {
                 isUser: false
             }));
         } catch (error) {
-            console.error("Error:", error);
+            console.error("Full error object:", error);
+            console.error("Error message:", error.message);
+            console.error("Error response:", error.response);
+            console.error("Error response data:", error.response?.data);
+            console.error("Error response status:", error.response?.status);
+            console.error("Error response headers:", error.response?.headers);
+            
             setMessages(prev => prev.filter(m => !m.isLoading).concat({
                 id: Date.now(),
-                text: "Oops! Something went wrong. Please try again.",
+                text: `Error: ${error.response?.data?.message || error.message || 'Something went wrong. Please try again.'}`,
                 isUser: false
             }));
         }
@@ -329,66 +388,23 @@ const ChatInterface = () => {
         setInputMessage(`Tell me about ${item.title}`);
     };
 
-    const filteredCategories = categories.map(cat => ({
-        ...cat,
-        items: cat.items.filter(item =>
-            item.title.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    })).filter(cat => cat.items.length > 0 || searchTerm === "");
+    const filteredCategories = categories
+        .filter(cat => !selectedCategory || cat.title === selectedCategory.title)
+        .map(cat => ({
+            ...cat,
+            items: cat.items.filter(item =>
+                item.title.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+        })).filter(cat => cat.items.length > 0 || searchTerm === "");
 
     return (
-        <Container sx={{ marginTop: '40px' }}>
-            <Sidebar visible={isSidebarVisible}>
-                <SidebarHeader >
-                    <Typography variant="h6" sx={{ color: '#f3f4f6', fontWeight: 600, fontSize: '16px' }}>
-                        Service Catalog
-                    </Typography>
-                    <IconButton size="small" onClick={() => setIsSidebarVisible(false)} sx={{ color: '#9ca3af' }}>
-                        <CloseIcon />
-                    </IconButton>
-                </SidebarHeader>
-                <SidebarContent>
-                    <SearchInput
-                        size="small"
-                        
-                        placeholder="Search services..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        InputProps={{
-                            startAdornment: <SearchIcon sx={{ color: '#9ca3af', mr: 1 }} />
-                        }}
-                    />
-                    {filteredCategories.map(category => (
-                        <CategoryItem key={category.id}>
-                            <CategoryHeader onClick={() => handleCategoryToggle(category.id)}>
-                                <span>{category.title}</span>
-                                {category.expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                            </CategoryHeader>
-                            <Collapse in={category.expanded}>
-                                <Box sx={{ mt: 1 }}>
-                                    {category.items.map(item => (
-                                        <SubItem key={item.id} onClick={() => handleSubItemClick(item)}>
-                                            {item.title}
-                                        </SubItem>
-                                    ))}
-                                </Box>
-                            </Collapse>
-                        </CategoryItem>
-                    ))}
-                </SidebarContent>
-            </Sidebar>
-
+        <Container sx={{ marginTop: 0, height: 'calc(100vh - 140px)' }}>
             <MainContent>
                 <Header>
-                    {!isSidebarVisible && (
-                        <IconButton onClick={() => setIsSidebarVisible(true)} sx={{ color: colors.textSecondary }}>
-                            <MenuIcon />
-                        </IconButton>
-                    )}
                     <Typography variant="h6" sx={{ color: colors.textPrimary, fontWeight: 600 }}>
                         IT Virtual Assistant
                     </Typography>
-                    <Chip label="Online" size="small" sx={{ backgroundColor: '#10b981', color: 'white' }} />
+                    <Chip label="Online" size="small" sx={{ backgroundColor: '#2d5a4a', color: 'white' }} />
                 </Header>
 
                 <ChatArea ref={chatAreaRef}>
@@ -418,6 +434,23 @@ const ChatInterface = () => {
                     </SendBtn>
                 </InputContainer>
             </MainContent>
+
+            <Sidebar visible={isSidebarVisible}>
+                <SidebarHeader >
+                    <Typography variant="h6" sx={{ color: '#f3f4f6', fontWeight: 600, fontSize: '16px' }}>
+                        {selectedCategory ? selectedCategory.title : 'Service Catalog'}
+                    </Typography>
+                </SidebarHeader>
+                <SidebarContent>
+                    {filteredCategories.map(category => (
+                        category.items.map(item => (
+                            <ServiceButton key={item.id} onClick={() => handleSubItemClick(item)}>
+                                {item.title}
+                            </ServiceButton>
+                        ))
+                    ))}
+                </SidebarContent>
+            </Sidebar>
         </Container>
     );
 };
