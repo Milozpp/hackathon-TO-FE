@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Typography, Card, CardContent, Grid, Chip } from '@mui/material';
 import { styled } from '@mui/system';
 
@@ -61,6 +61,7 @@ const CategoryIcon = styled(Box)({
 });
 
 const ServiceCatalog = ({ onCategorySelect }) => {
+    const [hoveredCard, setHoveredCard] = useState(null);
     const categories = [
         {
             id: 1,
@@ -84,7 +85,7 @@ const ServiceCatalog = ({ onCategorySelect }) => {
             description: "Account guidance and cost optimization",
             icon: "💡",
             color: "#f59e0b",
-            services: ["Advisory FinOps", "Event History"]
+            services: ["Advisory FinOps", "Account Advisory"]
         }
     ];
 
@@ -98,51 +99,171 @@ const ServiceCatalog = ({ onCategorySelect }) => {
                 }}>
                     Service Catalog
                 </Typography>
-                <Typography variant="h6" sx={{ 
-                    color: colors.textSecondary, 
-                    maxWidth: '600px',
-                    lineHeight: 1.6
-                }}>
-                    Choose a service category to get started with our AI-powered virtual assistant
-                </Typography>
+
             </Header>
 
             <Grid container spacing={4} maxWidth="1200px">
                 {categories.map((category) => (
                     <Grid item xs={12} md={4} key={category.id}>
-                        <CategoryCard onClick={() => onCategorySelect(category)}>
-                            <CategoryIcon sx={{ backgroundColor: category.color }}>
-                                {category.icon}
-                            </CategoryIcon>
-                            <CardContent sx={{ padding: '0 24px' }}>
-                                <Typography variant="h5" sx={{ 
-                                    fontWeight: 600, 
-                                    color: colors.textPrimary,
-                                    marginBottom: '8px'
+                        <Box sx={{ position: 'relative' }}>
+                            <CategoryCard 
+                                onMouseEnter={() => setHoveredCard(category.id)}
+                                onMouseLeave={() => setHoveredCard(null)}
+                            >
+                                <CategoryIcon sx={{ backgroundColor: category.color }}>
+                                    {category.icon}
+                                </CategoryIcon>
+                                <CardContent sx={{ padding: '0 24px' }}>
+                                    <Typography variant="h5" sx={{ 
+                                        fontWeight: 600, 
+                                        color: colors.textPrimary,
+                                        marginBottom: '8px'
+                                    }}>
+                                        {category.title}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ 
+                                        color: colors.textSecondary,
+                                        marginBottom: '16px',
+                                        lineHeight: 0
+                                    }}>
+                                        {category.description}
+                                    </Typography>
+                                    <Chip 
+                                        label={`${category.services.length} services`}
+                                        size="small"
+                                        sx={{ 
+                                            backgroundColor: category.color,
+                                            color: '#f8f9fa',
+                                            fontWeight: 500
+                                        }}
+                                    />
+                                </CardContent>
+                            </CategoryCard>
+                            {hoveredCard === category.id && (
+                                <Box sx={{
+                                    position: 'absolute',
+                                    top: '100%',
+                                    left: 0,
+                                    right: 0,
+                                    backgroundColor: 'white',
+                                    border: '2px solid #000',
+                                    borderRadius: '8px',
+                                    padding: '16px',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                                    zIndex: 1000,
+                                    width: '100%',
+                                    marginTop: '8px'
                                 }}>
-                                    {category.title}
-                                </Typography>
-                                <Typography variant="body2" sx={{ 
-                                    color: colors.textSecondary,
-                                    marginBottom: '16px',
-                                    lineHeight: 0
-                                }}>
-                                    {category.description}
-                                </Typography>
-                                <Chip 
-                                    label={`${category.services.length} services`}
-                                    size="small"
-                                    sx={{ 
-                                        backgroundColor: category.color,
-                                        color: '#f8f9fa',
-                                        fontWeight: 500
-                                    }}
-                                />
-                            </CardContent>
-                        </CategoryCard>
+                                    <Typography variant="body1" sx={{ fontWeight: 600, marginBottom: '12px' }}>
+                                        Services:
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                        {category.services.map((service, index) => (
+                                            <Box key={index} sx={{
+                                                backgroundColor: category.color,
+                                                color: 'white',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '14px',
+                                                fontWeight: 600
+                                            }}>
+                                                {service}
+                                            </Box>
+                                        ))}
+                                    </Box>
+                                </Box>
+                            )}
+                        </Box>
                     </Grid>
                 ))}
             </Grid>
+            
+            <Box sx={{ 
+                display: 'flex', 
+                gap: '48px', 
+                marginTop: '48px',
+                alignItems: 'flex-start'
+            }}>
+                <Box 
+                    onClick={() => onCategorySelect({ title: 'Amazon Bedrock', slideDirection: 'left', headerColor: '#1e3a8a' })}
+                    sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'transform 0.3s ease',
+                        '&:hover': { 
+                            transform: 'translateY(-8px) scale(1.05)'
+                        }
+                    }}>
+                         <Typography variant="body1" sx={{ 
+                        color: colors.textPrimary,
+                        fontWeight: 700,
+                        textAlign: 'center'
+                    }}>
+                        Powered by <br /><br />
+                    </Typography>
+                    <img 
+                        src="/bedrock.png" 
+                        alt="Amazon Bedrock" 
+                        style={{ 
+                            width: '120px', 
+                            height: '120px', 
+                            marginBottom: '12px',
+                            border: '3px solid #000',
+                            borderRadius: '16px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        }}
+                    />
+                    <Typography variant="body1" sx={{ 
+                        color: colors.textPrimary,
+                        fontWeight: 700,
+                        textAlign: 'center'
+                    }}>
+                        Amazon Bedrock
+                    </Typography>
+                </Box>
+                
+                <Box 
+                    onClick={() => onCategorySelect({ title: 'Amazon Bedrock AgentCore', slideDirection: 'right', headerColor: '#7c3aed' })}
+                    sx={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        transition: 'transform 0.3s ease',
+                        '&:hover': { 
+                            transform: 'translateY(-8px) scale(1.05)'
+                        }
+                    }}>
+                           <Typography variant="body1" sx={{ 
+                        color: colors.textPrimary,
+                        fontWeight: 700,
+                        textAlign: 'center'
+                    }}>
+                        Powered by <br /><br />
+                    </Typography>
+                    <img 
+                        src="/agentcore.png" 
+                        alt="Amazon Bedrock AgentCore" 
+                        style={{ 
+                            width: '120px', 
+                            height: '120px', 
+                            marginBottom: '12px',
+                            border: '3px solid #000',
+                            borderRadius: '16px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        }}
+                    />
+                    <Typography variant="body1" sx={{ 
+                        color: colors.textPrimary,
+                        fontWeight: 700,
+                        textAlign: 'center'
+                    }}>
+                        Amazon Bedrock<br />AgentCore
+                    </Typography>
+                </Box>
+            </Box>
         </Container>
     );
 };

@@ -289,9 +289,9 @@ const ChatInterface = ({ selectedCategory }) => {
             sessionId.current = Math.floor(100000 + Math.random() * 900000);
         }
         
-        const welcomeMessage = selectedCategory 
-            ? `Hello! I'm Fixy, your IT virtual assistant for ${selectedCategory.title}. How can I help you today?`
-            : "Hello! I'm Fixy, your IT virtual assistant. How can I help you today?";
+        const welcomeMessage = selectedCategory?.title === 'Amazon Bedrock AgentCore' 
+            ? "Hello! I'm the virtual Operations helper of ReplyNow, powered by Amazon Bedrock AgentCore. How can I help you today?"
+            : "Hello! I'm the virtual Operations helper of ReplyNow, powered by Amazon Bedrock. How can I help you today?";
             
         setMessages([{
             id: Date.now(),
@@ -400,20 +400,34 @@ const ChatInterface = ({ selectedCategory }) => {
     return (
         <Container sx={{ marginTop: 0, height: 'calc(100vh - 140px)' }}>
             <MainContent>
-                <Header>
-                    <Typography variant="h6" sx={{ color: colors.textPrimary, fontWeight: 600 }}>
-                        IT Virtual Assistant
+                <Header sx={{ backgroundColor: selectedCategory?.headerColor || '#f1f3f4' }}>
+                    <Typography variant="h6" sx={{ color: selectedCategory?.headerColor ? 'white' : colors.textPrimary, fontWeight: 600 }}>
+                        IT Assistant {selectedCategory ? `- ${selectedCategory.title}` : ''}
                     </Typography>
-                    <Chip label="Online" size="small" sx={{ backgroundColor: '#2d5a4a', color: 'white' }} />
+                    <Chip label="Online" size="small" sx={{ backgroundColor: selectedCategory?.headerColor ? 'rgba(255,255,255,0.2)' : '#2d5a4a', color: 'white' }} />
                 </Header>
 
                 <ChatArea ref={chatAreaRef}>
                     {messages.map(message => (
                         <MessageRow key={message.id} isUser={message.isUser}>
-                            <Avatar isUser={message.isUser}>
+                            <Avatar 
+                                isUser={message.isUser}
+                                sx={{
+                                    backgroundColor: message.isUser 
+                                        ? (selectedCategory?.headerColor || colors.primary)
+                                        : (selectedCategory?.headerColor || colors.secondary)
+                                }}
+                            >
                                 {message.isUser ? <PersonIcon fontSize="small" /> : <SmartToyIcon fontSize="small" />}
                             </Avatar>
-                            <MessageBubble isUser={message.isUser}>
+                            <MessageBubble 
+                                isUser={message.isUser}
+                                sx={{
+                                    backgroundColor: message.isUser 
+                                        ? (selectedCategory?.headerColor || colors.userMessage)
+                                        : colors.botMessage
+                                }}
+                            >
                                 <ReactMarkdown>{message.text}</ReactMarkdown>
                             </MessageBubble>
                         </MessageRow>
@@ -429,28 +443,16 @@ const ChatInterface = ({ selectedCategory }) => {
                         multiline
                         maxRows={4}
                     />
-                    <SendBtn onClick={handleSendMessage}>
+                    <SendBtn 
+                        onClick={handleSendMessage}
+                        sx={{ backgroundColor: selectedCategory?.headerColor || colors.primary }}
+                    >
                         <FaPaperPlane />
                     </SendBtn>
                 </InputContainer>
             </MainContent>
 
-            <Sidebar visible={isSidebarVisible}>
-                <SidebarHeader >
-                    <Typography variant="h6" sx={{ color: '#f3f4f6', fontWeight: 600, fontSize: '16px' }}>
-                        {selectedCategory ? selectedCategory.title : 'Service Catalog'}
-                    </Typography>
-                </SidebarHeader>
-                <SidebarContent>
-                    {filteredCategories.map(category => (
-                        category.items.map(item => (
-                            <ServiceButton key={item.id} onClick={() => handleSubItemClick(item)}>
-                                {item.title}
-                            </ServiceButton>
-                        ))
-                    ))}
-                </SidebarContent>
-            </Sidebar>
+
         </Container>
     );
 };

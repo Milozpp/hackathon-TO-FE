@@ -17,7 +17,20 @@ const AppContainer = styled(Box)({
   padding: '20px',
   borderRadius: '24px',
   boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 8px 24px rgba(0,0,0,0.1)',
-  overflow: 'hidden'
+  overflow: 'hidden',
+  position: 'relative'
+});
+
+const SlideContainer = styled(Box)({
+  position: 'absolute',
+  top: 0,
+  bottom: 0,
+  width: '80%',
+  backgroundColor: '#ffffff',
+  zIndex: 1000,
+  boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+  padding: '20px',
+  transition: 'transform 1.2s ease-in-out, opacity 1.2s ease-in-out'
 });
 
 const Header = styled(Box)({
@@ -46,13 +59,16 @@ const BackButton = styled(IconButton)({
 const HomePage = () => {
   const auth = useAuth();
   const [selectedCategory, setSelectedCategory] = React.useState(null);
+  const [showChat, setShowChat] = React.useState(false);
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
+    setTimeout(() => setShowChat(true), 100);
   };
 
   const handleBackToCatalog = () => {
-    setSelectedCategory(null);
+    setShowChat(false);
+    setTimeout(() => setSelectedCategory(null), 600);
   };
 
   const handleLogout = () => {
@@ -87,10 +103,35 @@ const HomePage = () => {
         </IconButton>
       </Header>
 
-      {!selectedCategory ? (
+      <Box onClick={selectedCategory ? handleBackToCatalog : undefined}>
         <ServiceCatalog onCategorySelect={handleCategorySelect} />
-      ) : (
-        <ChatInterface selectedCategory={selectedCategory} />
+      </Box>
+      
+      {selectedCategory && (
+        <SlideContainer 
+          onClick={(e) => e.stopPropagation()}
+          sx={{
+            left: selectedCategory.slideDirection === 'left' ? 0 : '20%',
+            transform: 'translateX(0)',
+            opacity: 1
+          }}>
+          <Header>
+            <BackButton
+              aria-label="back to catalog"
+              onClick={handleBackToCatalog}
+            >
+              <ArrowBackIcon />
+            </BackButton>
+            <Logo src="/logo.jpeg" alt="Logo" />
+          </Header>
+          <Box sx={{
+            opacity: showChat ? 1 : 0,
+            transform: showChat ? 'translateX(0)' : `translateX(${selectedCategory.slideDirection === 'left' ? '-20px' : '20px'})`,
+            transition: 'opacity 0.8s ease-out, transform 0.8s ease-out'
+          }}>
+            <ChatInterface selectedCategory={selectedCategory} />
+          </Box>
+        </SlideContainer>
       )}
     </AppContainer>
   );
