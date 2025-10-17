@@ -143,29 +143,34 @@ const ServiceCatalog = ({ onCategorySelect, isChatOpen }) => {
                                 <Box sx={{
                                     position: 'absolute',
                                     top: '100%',
-                                    left: 0,
-                                    right: 0,
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
                                     backgroundColor: 'white',
-                                    border: '2px solid #000',
-                                    borderRadius: '8px',
+                                    borderRadius: '12px',
                                     padding: '16px',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
                                     zIndex: 1000,
-                                    width: '100%',
-                                    marginTop: '8px'
-                                }}>
-                                    <Typography variant="body1" sx={{ fontWeight: 600, marginBottom: '12px' }}>
-                                        Services:
+                                    minWidth: '250px',
+                                    marginTop: '8px',
+                                    border: `2px solid ${category.color}`
+                                }}>                                    
+                                    <Typography variant="body1" sx={{ 
+                                        fontWeight: 600, 
+                                        marginBottom: '12px',
+                                        color: category.color,
+                                        textAlign: 'center'
+                                    }}>
+                                        Services
                                     </Typography>
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
                                         {category.services.map((service, index) => (
                                             <Box key={index} sx={{
                                                 backgroundColor: category.color,
                                                 color: 'white',
-                                                padding: '8px 12px',
-                                                borderRadius: '6px',
-                                                fontSize: '14px',
-                                                fontWeight: 600
+                                                padding: '6px 12px',
+                                                borderRadius: '8px',
+                                                fontSize: '12px',
+                                                fontWeight: 500
                                             }}>
                                                 {service}
                                             </Box>
