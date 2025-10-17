@@ -60,7 +60,7 @@ const CategoryIcon = styled(Box)({
     textAlign: 'center'
 });
 
-const ServiceCatalog = ({ onCategorySelect }) => {
+const ServiceCatalog = ({ onCategorySelect, isChatOpen }) => {
     const [hoveredCard, setHoveredCard] = useState(null);
     const categories = [
         {
@@ -182,7 +182,9 @@ const ServiceCatalog = ({ onCategorySelect }) => {
                 display: 'flex', 
                 gap: '48px', 
                 marginTop: '48px',
-                alignItems: 'flex-start'
+                alignItems: 'flex-start',
+                opacity: isChatOpen ? 0.3 : 1,
+                transition: 'opacity 0.3s ease-in-out'
             }}>
                 <Box 
                     onClick={() => onCategorySelect({ title: 'Amazon Bedrock', slideDirection: 'left', headerColor: '#1e3a8a' })}

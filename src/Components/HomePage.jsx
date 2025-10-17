@@ -22,15 +22,31 @@ const AppContainer = styled(Box)({
 });
 
 const SlideContainer = styled(Box)({
-  position: 'absolute',
-  top: 0,
-  bottom: 0,
-  width: '80%',
-  backgroundColor: '#ffffff',
+  position: 'fixed',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '90%',
+  height: '85%',
+  backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  backdropFilter: 'blur(5px)',
   zIndex: 1000,
   boxShadow: '0 0 20px rgba(0,0,0,0.3)',
   padding: '20px',
-  transition: 'transform 1.2s ease-in-out, opacity 1.2s ease-in-out'
+  borderRadius: '16px',
+  transition: 'all 0.3s ease-in-out'
+});
+
+const Overlay = styled(Box)({
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  backdropFilter: 'blur(5px)',
+  zIndex: 999,
+  transition: 'all 0.3s ease-in-out'
 });
 
 const Header = styled(Box)({
@@ -80,7 +96,10 @@ const HomePage = () => {
   return (
     <AppContainer>
       <CssBaseline />
-      <Header>
+      <Header sx={{
+        opacity: selectedCategory ? 0.3 : 1,
+        transition: 'opacity 0.3s ease-in-out'
+      }}>
         {selectedCategory && (
           <BackButton
             aria-label="back to catalog"
@@ -103,35 +122,41 @@ const HomePage = () => {
         </IconButton>
       </Header>
 
-      <Box onClick={selectedCategory ? handleBackToCatalog : undefined}>
-        <ServiceCatalog onCategorySelect={handleCategorySelect} />
+      <Box 
+        onClick={selectedCategory ? handleBackToCatalog : undefined}
+        sx={{
+          filter: selectedCategory ? 'blur(3px)' : 'none',
+          opacity: selectedCategory ? 0.6 : 1,
+          pointerEvents: selectedCategory ? 'none' : 'auto',
+          transition: 'all 0.3s ease-in-out'
+        }}
+      >
+        <ServiceCatalog onCategorySelect={handleCategorySelect} isChatOpen={!!selectedCategory} />
       </Box>
       
       {selectedCategory && (
-        <SlideContainer 
-          onClick={(e) => e.stopPropagation()}
-          sx={{
-            left: selectedCategory.slideDirection === 'left' ? 0 : '20%',
-            transform: 'translateX(0)',
-            opacity: 1
-          }}>
-          <Header>
-            <BackButton
-              aria-label="back to catalog"
-              onClick={handleBackToCatalog}
-            >
-              <ArrowBackIcon />
-            </BackButton>
-            <Logo src="/logo.jpeg" alt="Logo" />
-          </Header>
-          <Box sx={{
-            opacity: showChat ? 1 : 0,
-            transform: showChat ? 'translateX(0)' : `translateX(${selectedCategory.slideDirection === 'left' ? '-20px' : '20px'})`,
-            transition: 'opacity 0.8s ease-out, transform 0.8s ease-out'
-          }}>
-            <ChatInterface selectedCategory={selectedCategory} />
-          </Box>
-        </SlideContainer>
+        <>
+          <Overlay onClick={handleBackToCatalog} />
+          <SlideContainer onClick={(e) => e.stopPropagation()}>
+            <Header>
+              <BackButton
+                aria-label="back to catalog"
+                onClick={handleBackToCatalog}
+              >
+                <ArrowBackIcon />
+              </BackButton>
+              <Logo src="/logo.jpeg" alt="Logo" />
+            </Header>
+            <Box sx={{
+              opacity: showChat ? 1 : 0,
+              transition: 'opacity 0.3s ease-out',
+              height: 'calc(100% - 100px)',
+              overflow: 'hidden'
+            }}>
+              <ChatInterface selectedCategory={selectedCategory} />
+            </Box>
+          </SlideContainer>
+        </>
       )}
     </AppContainer>
   );

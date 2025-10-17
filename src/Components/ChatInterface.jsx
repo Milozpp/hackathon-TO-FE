@@ -31,7 +31,7 @@ const colors = {
 const Container = styled(Box)({
     display: 'flex',
     height: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent',
     fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
     borderRadius: '16px',
     overflow: 'hidden'
@@ -116,13 +116,13 @@ const MainContent = styled(Box)({
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: colors.background
+    backgroundColor: 'rgba(245, 245, 245, 0.1)'
 });
 
 const Header = styled(Box)({
     padding: '16px 24px',
-    backgroundColor: '#f1f3f4',
-    borderBottom: `1px solid ${colors.border}`,
+    backgroundColor: 'rgba(241, 243, 244, 0.2)',
+    borderBottom: `1px solid rgba(229, 231, 235, 0.3)`,
     display: 'flex',
     alignItems: 'center',
     gap: '16px',
@@ -136,11 +136,12 @@ const ChatArea = styled(Box)({
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
+    backgroundColor: 'transparent',
     '&::-webkit-scrollbar': {
         width: '8px'
     },
     '&::-webkit-scrollbar-thumb': {
-        backgroundColor: '#d1d5db',
+        backgroundColor: 'rgba(209, 213, 219, 0.5)',
         borderRadius: '4px'
     }
 });
@@ -167,7 +168,7 @@ const Avatar = styled(Box)(({ isUser }) => ({
 const MessageBubble = styled(Paper)(({ isUser }) => ({
     padding: '12px 16px',
     maxWidth: '70%',
-    backgroundColor: isUser ? colors.userMessage : colors.botMessage,
+    backgroundColor: isUser ? 'rgba(45, 90, 74, 0.8)' : 'rgba(248, 249, 250, 0.8)',
     color: isUser ? 'white' : colors.textPrimary,
     borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
     boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
@@ -176,8 +177,8 @@ const MessageBubble = styled(Paper)(({ isUser }) => ({
 
 const InputContainer = styled(Box)({
     padding: '16px 24px',
-    backgroundColor: '#f1f3f4',
-    borderTop: `1px solid ${colors.border}`,
+    backgroundColor: 'rgba(241, 243, 244, 0.2)',
+    borderTop: `1px solid rgba(229, 231, 235, 0.3)`,
     display: 'flex',
     gap: '12px',
     alignItems: 'center'
@@ -187,9 +188,9 @@ const StyledInput = styled(TextField)({
     flex: 1,
     '& .MuiOutlinedInput-root': {
         borderRadius: '24px',
-        backgroundColor: colors.background,
+        backgroundColor: 'rgba(245, 245, 245, 0.5)',
         '& fieldset': {
-            borderColor: colors.border
+            borderColor: 'rgba(229, 231, 235, 0.3)'
         },
         '&:hover fieldset': {
             borderColor: colors.primary
@@ -398,7 +399,7 @@ const ChatInterface = ({ selectedCategory }) => {
         })).filter(cat => cat.items.length > 0 || searchTerm === "");
 
     return (
-        <Container sx={{ marginTop: 0, height: 'calc(100vh - 140px)' }}>
+        <Container sx={{ marginTop: 0, height: '100%' }}>
             <MainContent>
                 <Header sx={{ backgroundColor: selectedCategory?.headerColor || '#f1f3f4' }}>
                     <Typography variant="h6" sx={{ color: selectedCategory?.headerColor ? 'white' : colors.textPrimary, fontWeight: 600 }}>
