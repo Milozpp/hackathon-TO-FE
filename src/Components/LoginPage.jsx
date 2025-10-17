@@ -85,7 +85,7 @@ const LoginPage = () => {
     return (
         <Container>
             <LoginCard>
-                <Logo src="/logo.jpeg" alt="Logo" />
+                <Logo src="/output.png" alt="Logo" />
                 <Typography variant="h4" sx={{ 
                     fontWeight: 700, 
                     color: '#1f2937', 

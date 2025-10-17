@@ -108,7 +108,7 @@ const HomePage = () => {
             <ArrowBackIcon />
           </BackButton>
         )}
-        <Logo src="/logo.jpeg" alt="Logo" />
+        <Logo src="/output.png" alt="Logo" />
         <IconButton
           onClick={handleLogout}
           sx={{
@@ -145,7 +145,7 @@ const HomePage = () => {
               >
                 <ArrowBackIcon />
               </BackButton>
-              <Logo src="/logo.jpeg" alt="Logo" />
+              <Logo src="/output.png" alt="Logo" />
             </Header>
             <Box sx={{
               opacity: showChat ? 1 : 0,

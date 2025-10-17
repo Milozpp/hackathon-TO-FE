@@ -310,6 +310,10 @@ const ChatInterface = ({ selectedCategory }) => {
     const handleSendMessage = async () => {
         if (!inputMessage.trim()) return;
 
+        // Debug authentication status
+        console.log('User object:', user);
+        console.log('Is authenticated:', !!user);
+
         const newMessage = { id: Date.now(), text: inputMessage, isUser: true };
         setMessages(prev => [...prev, newMessage]);
         setInputMessage("");
@@ -324,7 +328,12 @@ const ChatInterface = ({ selectedCategory }) => {
                     if (user) {
                         user.getSession((err, session) => {
                             if (err) {
+                                console.error('Session error:', err);
                                 reject(err);
+                                return;
+                            }
+                            if (!session || !session.isValid()) {
+                                reject(new Error('Invalid session'));
                                 return;
                             }
                             const token = session.getIdToken().getJwtToken();
@@ -337,30 +346,50 @@ const ChatInterface = ({ selectedCategory }) => {
             };
 
             const token = await getToken();
-            console.log('JWT Token:', token);
+            console.log('JWT Token obtained successfully');
+            console.log('Token length:', token?.length);
+            console.log('Token starts with:', token?.substring(0, 20) + '...');
             
-            console.log('Sending API request to:', `${config.url_integration}/test/invoke_agent`);
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            
+            console.log('Sending API request to:', `${config.url_integration}/test/invoke_bedrock_agent`);
+            console.log('Request headers:', headers);
+            const flagType = selectedCategory?.title === 'Amazon Bedrock AgentCore' ? 1 : 0;
+            
             console.log('Request payload:', {
                 input_text: inputMessage,
-                session_id: String(sessionId.current)
+                session_id: String(sessionId.current),
+                flag_type: flagType
             });
-
-            const response = await axios.post(`${config.url_integration}/test/invoke_agent`, {
+            
+            const response = await axios.post(`${config.url_integration}/test/invoke_bedrock_agent`, {
                 input_text: inputMessage,
-                session_id: String(sessionId.current)
+                session_id: String(sessionId.current),
+                flag_type: flagType
             }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                headers,
+                timeout: 30000 // 30 second timeout
             });
 
             console.log('API response:', response);
             console.log('Response data:', response.data);
 
+            // Parse the nested response structure
+            let completionText = "Sorry, I didn't understand that.";
+            if (response?.data?.completion?.result) {
+                completionText = response.data.completion.result;
+            } else if (response?.data?.completion) {
+                completionText = typeof response.data.completion === 'string' ? response.data.completion : JSON.stringify(response.data.completion);
+            }
+            
+            const safeText = typeof completionText === 'string' ? completionText : JSON.stringify(completionText);
+            
             setMessages(prev => prev.filter(m => !m.isLoading).concat({
                 id: Date.now(),
-                text: response?.data?.completion || "Sorry, I didn't understand that.",
+                text: safeText,
                 isUser: false
             }));
         } catch (error) {
@@ -371,9 +400,27 @@ const ChatInterface = ({ selectedCategory }) => {
             console.error("Error response status:", error.response?.status);
             console.error("Error response headers:", error.response?.headers);
             
+            let errorMessage = 'Something went wrong. Please try again.';
+            
+            if (error.code === 'ECONNABORTED') {
+                errorMessage = 'Request timeout. Please check your connection and try again.';
+            } else if (error.code === 'ERR_NETWORK') {
+                errorMessage = 'Network error. Please check your internet connection and API endpoint.';
+            } else if (error.response?.status === 401) {
+                errorMessage = 'Authentication failed. Please log in again.';
+            } else if (error.response?.status === 403) {
+                errorMessage = 'Access denied. Please check your permissions.';
+            } else if (error.response?.status >= 500) {
+                errorMessage = 'Server error. Please try again later.';
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
             setMessages(prev => prev.filter(m => !m.isLoading).concat({
                 id: Date.now(),
-                text: `Error: ${error.response?.data?.message || error.message || 'Something went wrong. Please try again.'}`,
+                text: `Error: ${errorMessage}`,
                 isUser: false
             }));
         }
@@ -429,7 +476,7 @@ const ChatInterface = ({ selectedCategory }) => {
                                         : colors.botMessage
                                 }}
                             >
-                                <ReactMarkdown>{message.text}</ReactMarkdown>
+                                <ReactMarkdown>{typeof message.text === 'string' ? message.text : JSON.stringify(message.text)}</ReactMarkdown>
                             </MessageBubble>
                         </MessageRow>
                     ))}
@@ -441,8 +488,6 @@ const ChatInterface = ({ selectedCategory }) => {
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                        multiline
-                        maxRows={4}
                     />
                     <SendBtn 
                         onClick={handleSendMessage}
